@@ -4,10 +4,12 @@ MyAnime Cafe 自動訂位機器人
 """
 
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Optional
 
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from pydantic import BaseModel, Field
 
@@ -16,6 +18,8 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 
 class BookingConfig(BaseModel):
@@ -65,6 +69,7 @@ class InlineBookingBot:
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
+            # browser = p.chromium.connect_over_cdp(self.url)
             context = browser.new_context(
                 viewport={"width": 1000, "height": 1080},
                 user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -270,18 +275,15 @@ class InlineBookingBot:
 
 
 def main():
-    """主程式"""
-    # 配置設定
     config = BookingConfig(
-        url="https://inline.app/booking/-M_TwoiyKcwNZH-iU-Fj:inline-live-2/-OTjsUUj2YPzUU-0lkA2?language=zh-tw",  # 高雄
-        # url="https://inline.app/booking/-M_TwoiyKcwNZH-iU-Fj:inline-live-2/-M_Twou5t4U3fNu7XrDh", # 台北
-        name="test",
-        phone="0912345678",
-        email="example@example.com",
-        party_size=4,  # 用餐人數 (1-4)
-        times=["12:45", "11:10", "17:50", "19:30"],  # 偏好時段（依序嘗試）
-        date="2026-02-07",  # None = 當日，或指定 '2026-02-01'
-        headless=False,  # False = 顯示瀏覽器，True = 背景執行
+        url=os.getenv("BOOKING_URL"),
+        name=os.getenv("NAME"),
+        phone=os.getenv("PHONE"),
+        email=os.getenv("EMAIL"),
+        party_size=int(os.getenv("PARTY_SIZE", "2")),
+        times=os.getenv("TIMES").split(","),
+        date=os.getenv("DATE"),  # None = 當日
+        headless=os.getenv("HEADLESS", "false").lower() == "true",
     )
 
     # 創建並執行機器人
