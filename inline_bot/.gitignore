@@ -11,3 +11,6 @@ wheels/
 
 # Image
 *.png
+
+# Environment files
+.env
